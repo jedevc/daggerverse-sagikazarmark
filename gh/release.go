@@ -16,6 +16,14 @@ type Release struct {
 	Gh *Gh
 }
 
+type Latest string
+
+const (
+	LatestYes  Latest = "TRUE"
+	LatestNo   Latest = "FALSE"
+	LatestAuto Latest = "AUTO"
+)
+
 // Create a new GitHub Release for a repository.
 func (m *Release) Create(
 	ctx context.Context,
@@ -74,7 +82,8 @@ func (m *Release) Create(
 	// Mark this release as "Latest" (default: automatic based on date and version).
 	//
 	// +optional
-	latest bool,
+	// +default="AUTO"
+	latest Latest,
 
 	// Abort in case the git tag doesn't already exist in the remote repository.
 	//
@@ -137,8 +146,13 @@ func (m *Release) Create(
 		args = append(args, "--notes-start-tag", notesStartTag)
 	}
 
-	if latest {
-		args = append(args, "--latest")
+	switch latest {
+	case LatestAuto:
+		// no flag means automatic based on date and version
+	case LatestNo:
+		args = append(args, "--latest=false")
+	case LatestYes:
+		args = append(args, "--latest=true")
 	}
 
 	if verifyTag {
